@@ -2,263 +2,322 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Sourdough Calculator</title>
+<title>Sourdough Recipe Card</title>
 <style>
   body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    background: #f4f4f4;
+    font-family: Georgia, 'Times New Roman', serif;
+    background: #f5f1e8;
+    margin: 0;
+    padding: 30px;
+    color: #2f2a25;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; }
+
+  .card {
+    background: #fffdf8;
+    border: 1px solid #e6dccd;
+    border-radius: 14px;
+    padding: 30px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+
+  h1 { margin: 0; font-size: 28px; }
+  .subtitle { font-style: italic; color: #6b5e52; margin-bottom: 20px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
   }
 
   .section {
-    margin-bottom: 20px;
     padding: 15px;
+    border-radius: 10px;
+    background: #faf7f0;
+    border: 1px solid #eee3d2;
+  }
+
+  h3 {
+    margin-top: 0;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  label { display:block; font-size: 13px; margin: 10px 0; }
+
+  input, textarea, select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+    border-radius: 6px;
+    border: 1px solid #d8cbb8;
+    font-family: inherit;
+  }
+
+  textarea { resize: vertical; }
+
+  .results {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f0e7d8;
     border-radius: 10px;
   }
 
-  .inputs { background: #fff9c4; }
-  .percentages { background: #bbdefb; }
-  .results { background: #c8e6c9; }
+  .results p { margin: 6px 0; }
+  .value { font-weight: bold; }
 
-  label { display: block; margin: 8px 0; }
-  input { width: 90px; padding: 5px; margin-left: 10px; }
-
-  button {
-    margin: 5px 5px 0 0;
-    padding: 6px 10px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
   }
 
-  .result { font-weight: bold; }
+  button {
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    background: #6b4f3b;
+    color: white;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  button:hover { background: #5a4030; }
 </style>
 </head>
 <body>
+<div class="container">
+<div class="card">
 
-<h2>🥖 Lori’s Sourdough Calculator</h2>
+<h1>🥖 Sourdough Recipe</h1>
+<div class="subtitle">Formula + fermentation planner</div>
 
-<div class="section inputs">
-  <h3>🟡 Inputs</h3>
+<div class="grid">
 
-  <label>
-    Mode:
-    <select id="mode">
-      <option value="flour">Flour Based</option>
-      <option value="dough">Dough Weight</option>
-    </select>
-  </label>
+<div class="section">
+<h3>Formula</h3>
 
-  <label id="flourLabel">Flour (g):
-    <input type="number" id="flour" value="500">
-  </label>
-
-  <label id="doughLabel" style="display:none;">Total Dough (g):
-    <input type="number" id="doughWeight" value="900">
-  </label>
-
-  <label>
-  Recipe Name:
-  <input type="text" id="recipeName" placeholder="e.g. Daily loaf">
+<label>Mode
+<select id="mode">
+<option value="flour">Flour Based</option>
+<option value="dough">Total Dough</option>
+</select>
 </label>
 
-<label>
-  Saved Recipes:
-  <select id="recipeList" onchange="loadSelectedRecipe()">
-    <option value="">-- Select --</option>
-  </select>
+<label>Flour (g)
+<input type="number" id="flour" value="500">
 </label>
 
-  <button onclick="loadLastLoaf()">Last Loaf</button>
-  <button onclick="saveRecipe()">Save Recipe</button>
-  <button onclick="printRecipe()">Print / Export</button>
-  <button onclick="deleteRecipe()">Delete Recipe</button>
+<label id="doughWeightLabel" style="display:none;">
+Total Dough (g)
+<input type="number" id="doughWeight" value="900">
+</label>
+
+<label>Hydration %
+<input type="number" id="hydration" value="73">
+</label>
+
+<label>Starter %
+<input type="number" id="starterPct" value="20">
+</label>
+
+<label>Salt %
+<input type="number" id="saltPct" value="2">
+</label>
+
 </div>
 
-<div class="section percentages">
-  <h3>🔵 Percentages</h3>
-  <label>Hydration % <input type="number" id="hydration" value="73"></label>
-  <label>Starter % <input type="number" id="starterPct" value="20"></label>
-  <label>Salt % <input type="number" id="saltPct" value="2"></label>
-  <label>Sugar % <input type="number" id="sugarPct" value="0"></label>
-  <label>Oil % <input type="number" id="oilPct" value="0"></label>
+<div class="section">
+<h3>Recipe Details</h3>
+
+<label>Name
+<input type="text" id="recipeName">
+</label>
+
+<label>Notes
+<textarea id="notes" rows="3"></textarea>
+</label>
+
+<label>Bulk Time
+<input id="bulkTime">
+</label>
+
+<label>Bulk Temp
+<input id="bulkTemp">
+</label>
+
+<label>Cold Time
+<input id="coldTime">
+</label>
+
+<label>Cold Temp
+<input id="coldTemp">
+</label>
+
+<label>Saved Recipes
+<select id="recipeList" onchange="loadSelectedRecipe()">
+<option value="">-- Select --</option>
+</select>
+</label>
+
 </div>
 
-<div class="section results">
-  <h3>🟢 Results</h3>
-  <p>Flour: <span id="flourOut" class="result"></span> g</p>
-  <p>Starter: <span id="starter" class="result"></span> g</p>
-  <p>Water: <span id="water" class="result"></span> g</p>
-  <p>Salt: <span id="salt" class="result"></span> g</p>
-  <p>Sugar: <span id="sugar" class="result"></span> g</p>
-  <p>Oil: <span id="oil" class="result"></span> g</p>
-  <hr>
-  <p><strong>Total Dough:</strong> <span id="total" class="result"></span> g</p>
+</div>
+
+<div class="results">
+<p>Flour: <span class="value" id="flourOut"></span> g</p>
+<p>Starter: <span class="value" id="starter"></span> g</p>
+<p>Water: <span class="value" id="water"></span> g</p>
+<p>Salt: <span class="value" id="salt"></span> g</p>
+<p><strong>Estimated Total Dough:</strong> <span class="value" id="total"></span> g</p>
+</div>
+
+<div class="actions">
+<button onclick="saveRecipe()">Save</button>
+<button onclick="loadLastLoaf()">Last Loaf</button>
+<button onclick="deleteRecipe()">Delete</button>
+<button onclick="exportRecipes()">Export JSON</button>
+<button onclick="printRecipe()">Print</button>
+</div>
+
+</div>
 </div>
 
 <script>
+function el(id){ return document.getElementById(id); }
+function num(id){ return parseFloat(el(id).value)||0; }
+function set(id,v){ el(id).textContent = (+v).toFixed(1); }
+function mode(){ return el("mode"); }
+
 function calculate() {
-  let flour = parseFloat(document.getElementById("flour").value) || 0;
-  const doughWeight = parseFloat(document.getElementById("doughWeight").value) || 0;
+  const hydration = num("hydration");
+  const starterPct = num("starterPct");
+  const saltPct = num("saltPct");
 
-  const hydration = parseFloat(document.getElementById("hydration").value) || 0;
-  const starterPct = parseFloat(document.getElementById("starterPct").value) || 0;
-  const saltPct = parseFloat(document.getElementById("saltPct").value) || 0;
-  const sugarPct = parseFloat(document.getElementById("sugarPct").value) || 0;
-  const oilPct = parseFloat(document.getElementById("oilPct").value) || 0;
+  let flour;
 
-  if (document.getElementById("mode").value === "dough") {
-    // Estimate flour from total dough weight
-    const factor = 1 + (hydration/100) + (starterPct/100) + (saltPct/100) + (sugarPct/100) + (oilPct/100);
+  if (mode().value === "dough") {
+    const doughWeight = num("doughWeight");
+    const factor = 1 + hydration/100 + starterPct/100 + saltPct/100;
     flour = doughWeight / factor;
-    document.getElementById("flour").value = flour.toFixed(1);
-  }
-
-  const starter = flour * (starterPct / 100);
-  const starterWater = starter / 2;
-
-  const totalWater = flour * (hydration / 100);
-  const water = totalWater - starterWater;
-
-  const salt = flour * (saltPct / 100);
-  const sugar = flour * (sugarPct / 100);
-  const oil = flour * (oilPct / 100);
-
-  const total = flour + water + starter + salt + sugar + oil;
-
-  document.getElementById("flourOut").textContent = flour.toFixed(1);
-  document.getElementById("starter").textContent = starter.toFixed(1);
-  document.getElementById("water").textContent = water.toFixed(1);
-  document.getElementById("salt").textContent = salt.toFixed(1);
-  document.getElementById("sugar").textContent = sugar.toFixed(1);
-  document.getElementById("oil").textContent = oil.toFixed(1);
-  document.getElementById("total").textContent = total.toFixed(1);
-}
-
-// Mode toggle
-document.getElementById("mode").addEventListener("change", () => {
-  const mode = document.getElementById("mode").value;
-  document.getElementById("flourLabel").style.display = mode === "flour" ? "block" : "none";
-  document.getElementById("doughLabel").style.display = mode === "dough" ? "block" : "none";
-  calculate();
-});
-
-// Save recipe
-function saveRecipe() {
-  const name = document.getElementById("recipeName").value.trim();
-  if (!name) return alert("Please enter a recipe name!");
-
-  const data = {
-    flour: document.getElementById("flour").value,
-    hydration: document.getElementById("hydration").value,
-    starterPct: document.getElementById("starterPct").value,
-    saltPct: document.getElementById("saltPct").value,
-    sugarPct: document.getElementById("sugarPct").value,
-    oilPct: document.getElementById("oilPct").value
-  };
-
-  let recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
-
-  // check if name exists → overwrite
-  const existingIndex = recipes.findIndex(r => r.name === name);
-
-  if (existingIndex >= 0) {
-    recipes[existingIndex].data = data;
+    el("flour").value = flour.toFixed(1);
   } else {
-    recipes.push({ name, data });
+    flour = num("flour");
   }
 
-  localStorage.setItem("sourdoughRecipes", JSON.stringify(recipes));
+  const starter = flour * starterPct/100;
+  const water = flour * hydration/100 - starter/2;
+  const salt = flour * saltPct/100;
 
-  updateRecipeList();
-  alert("Recipe saved!");
+  const total = flour + starter + water + salt;
+
+  set("flourOut", flour);
+  set("starter", starter);
+  set("water", water);
+  set("salt", salt);
+  set("total", total);
 }
 
-// Load last loaf
-function loadLastLoaf() {
-  const data = JSON.parse(localStorage.getItem("sourdoughRecipe"));
-  if (!data) return alert("No saved recipe yet!");
-  Object.keys(data).forEach(id => {
-    document.getElementById(id).value = data[id];
-  });
+// MODE TOGGLE
+el("mode").addEventListener("change", () => {
+  const m = el("mode").value;
+  el("doughWeightLabel").style.display = m === "dough" ? "block" : "none";
   calculate();
-}
-  
-  // Load selected recipe 
-  document.getElementById("recipeName").value = name;
-  function loadSelectedRecipe() {
-  const name = document.getElementById("recipeList").value;
-  if (!name) return;
-
-  const recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
-  const recipe = recipes.find(r => r.name === name);
-
-  if (!recipe) return;
-
-  const data = recipe.data;
-
-  Object.keys(data).forEach(id => {
-    document.getElementById(id).value = data[id];
-  });
-
-  calculate();
-}
-
-  // Populate dropdown
-  function updateRecipeList() {
-  const select = document.getElementById("recipeList");
-  const recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
-
-  select.innerHTML = `<option value="">-- Select --</option>`;
-
-  recipes.forEach(r => {
-    const option = document.createElement("option");
-    option.value = r.name;
-    option.textContent = r.name;
-    select.appendChild(option);
-  });
-}
-
-// Print
-function printRecipe() {
-  window.print();
-}
-
-// Delete recipe
-  function deleteRecipe() {
-  const select = document.getElementById("recipeList");
-  const name = select.value;
-
-  if (!name) {
-    alert("Please select a recipe to delete.");
-    return;
-  }
-
-  if (!confirm(`Delete recipe "${name}"? This cannot be undone.`)) {
-    return;
-  }
-
-  let recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
-
-  recipes = recipes.filter(r => r.name !== name);
-
-  localStorage.setItem("sourdoughRecipes", JSON.stringify(recipes));
-
-  // Clear selection + refresh UI
-  select.value = "";
-  updateRecipeList();
-
-  alert("Recipe deleted.");
-}
-
-// Live updates
-document.querySelectorAll("input").forEach(input => {
-  input.addEventListener("input", calculate);
 });
 
-// Init
+// SAVE
+function saveRecipe() {
+  const name = el("recipeName").value.trim();
+  if (!name) return alert("Name required");
+
+  const data = collect();
+
+  let recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
+  const i = recipes.findIndex(r => r.name === name);
+
+  if (i >= 0) recipes[i].data = data;
+  else recipes.push({name, data});
+
+  localStorage.setItem("sourdoughRecipes", JSON.stringify(recipes));
+  updateList();
+}
+
+function loadSelectedRecipe() {
+  const name = el("recipeList").value;
+  const recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
+  const r = recipes.find(x => x.name === name);
+  if (!r) return;
+  apply(r.data);
+  calculate();
+}
+
+function loadLastLoaf() {
+  const r = JSON.parse(localStorage.getItem("sourdoughRecipe"));
+  if (!r) return alert("No last loaf");
+  apply(r);
+  calculate();
+}
+
+function deleteRecipe() {
+  const name = el("recipeList").value;
+  let recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
+  recipes = recipes.filter(r => r.name !== name);
+  localStorage.setItem("sourdoughRecipes", JSON.stringify(recipes));
+  updateList();
+}
+
+function updateList() {
+  const sel = el("recipeList");
+  const recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
+  sel.innerHTML = "<option value=''>-- Select --</option>";
+  recipes.forEach(r => {
+    const o = document.createElement("option");
+    o.value = r.name;
+    o.textContent = r.name;
+    sel.appendChild(o);
+  });
+}
+
+// EXPORT
+function exportRecipes() {
+  const recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
+  const blob = new Blob([JSON.stringify(recipes, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "sourdough-recipes.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function collect() {
+  return {
+    flour: el("flour").value,
+    hydration: el("hydration").value,
+    starterPct: el("starterPct").value,
+    saltPct: el("saltPct").value,
+    notes: el("notes").value,
+    bulkTime: el("bulkTime").value,
+    bulkTemp: el("bulkTemp").value,
+    coldTime: el("coldTime").value,
+    coldTemp: el("coldTemp").value
+  };
+}
+
+function apply(d) {
+  for (let k in d) if (el(k)) el(k).value = d[k];
+}
+
+function printRecipe(){ window.print(); }
+
+// LIVE UPDATES
+document.querySelectorAll("input").forEach(i=>i.addEventListener("input",calculate));
+
+updateList();
 calculate();
-updateRecipeList();
 </script>
 
 </body>
