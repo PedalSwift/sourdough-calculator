@@ -72,6 +72,7 @@
   <button onclick="loadLastLoaf()">Last Loaf</button>
   <button onclick="saveRecipe()">Save Recipe</button>
   <button onclick="printRecipe()">Print / Export</button>
+  <button onclick="deleteRecipe()">Delete Recipe</button>
 </div>
 
 <div class="section percentages">
@@ -221,6 +222,33 @@ function loadLastLoaf() {
 // Print
 function printRecipe() {
   window.print();
+}
+
+// Delete recipe
+  function deleteRecipe() {
+  const select = document.getElementById("recipeList");
+  const name = select.value;
+
+  if (!name) {
+    alert("Please select a recipe to delete.");
+    return;
+  }
+
+  if (!confirm(`Delete recipe "${name}"? This cannot be undone.`)) {
+    return;
+  }
+
+  let recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
+
+  recipes = recipes.filter(r => r.name !== name);
+
+  localStorage.setItem("sourdoughRecipes", JSON.stringify(recipes));
+
+  // Clear selection + refresh UI
+  select.value = "";
+  updateRecipeList();
+
+  alert("Recipe deleted.");
 }
 
 // Live updates
