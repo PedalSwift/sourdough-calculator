@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sourdough Recipe Card</title>
 <style>
   body {
@@ -31,6 +32,18 @@
     gap: 20px;
   }
 
+  @media (max-width: 600px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+    body {
+      padding: 15px;
+    }
+    .card {
+      padding: 20px;
+    }
+  }
+
   .section {
     padding: 15px;
     border-radius: 10px;
@@ -54,6 +67,7 @@
     border-radius: 6px;
     border: 1px solid #d8cbb8;
     font-family: inherit;
+    box-sizing: border-box;
   }
 
   textarea { resize: vertical; }
@@ -83,16 +97,110 @@
     color: white;
     cursor: pointer;
     font-family: inherit;
+    font-size: 14px;
   }
 
   button:hover { background: #5a4030; }
+
+  /* Hidden file input for import */
+  #importInput { display: none; }
+
+  /* Toast notification */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #3d3229;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    z-index: 1000;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  /* Confirmation dialog */
+  .dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .dialog-overlay.show {
+    display: flex;
+  }
+
+  .dialog {
+    background: #fffdf8;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 360px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  }
+
+  .dialog h4 {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+  }
+
+  .dialog p {
+    margin: 0 0 20px 0;
+    color: #6b5e52;
+  }
+
+  .dialog-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .dialog-actions button.cancel {
+    background: #e6dccd;
+    color: #2f2a25;
+  }
+
+  .dialog-actions button.cancel:hover {
+    background: #d8cbb8;
+  }
+
+  .dialog-actions button.danger {
+    background: #a94442;
+  }
+
+  .dialog-actions button.danger:hover {
+    background: #8b3634;
+  }
+
+  /* Starter hydration inline input */
+  .inline-input {
+    display: inline-block;
+    width: 50px;
+    padding: 4px 6px;
+    margin: 0 4px;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
 <div class="container">
 <div class="card">
 
-<h1>🥖 Sourdough Recipe</h1>
+<h1>Sourdough Recipe</h1>
 <div class="subtitle">Formula + fermentation planner</div>
 
 <div class="grid">
@@ -128,33 +236,37 @@ Total Dough (g)
 <input type="number" id="saltPct" value="2">
 </label>
 
+<label>Starter Hydration %
+<input type="number" id="starterHydration" value="100" min="50" max="200">
+</label>
+
 </div>
 
 <div class="section">
 <h3>Recipe Details</h3>
 
 <label>Name
-<input type="text" id="recipeName">
+<input type="text" id="recipeName" placeholder="e.g., Country Loaf">
 </label>
 
 <label>Notes
-<textarea id="notes" rows="3"></textarea>
+<textarea id="notes" rows="3" placeholder="Add any notes about this recipe..."></textarea>
 </label>
 
-<label>Bulk Time
-<input id="bulkTime">
+<label>Bulk Fermentation Time
+<input id="bulkTime" placeholder="e.g., 4-6 hours">
 </label>
 
-<label>Bulk Temp
-<input id="bulkTemp">
+<label>Bulk Fermentation Temp
+<input id="bulkTemp" placeholder="e.g., 78°F / 26°C">
 </label>
 
-<label>Cold Time
-<input id="coldTime">
+<label>Cold Retard Time
+<input id="coldTime" placeholder="e.g., 12-16 hours">
 </label>
 
-<label>Cold Temp
-<input id="coldTemp">
+<label>Cold Retard Temp
+<input id="coldTemp" placeholder="e.g., 38°F / 3°C">
 </label>
 
 <label>Saved Recipes
@@ -176,14 +288,32 @@ Total Dough (g)
 </div>
 
 <div class="actions">
+<button onclick="newRecipe()">New</button>
 <button onclick="saveRecipe()">Save</button>
 <button onclick="loadLastLoaf()">Last Loaf</button>
-<button onclick="deleteRecipe()">Delete</button>
-<button onclick="exportRecipes()">Export JSON</button>
+<button onclick="confirmDelete()">Delete</button>
+<button onclick="exportRecipes()">Export</button>
+<button onclick="triggerImport()">Import</button>
 <button onclick="printRecipe()">Print</button>
+<input type="file" id="importInput" accept=".json" onchange="importRecipes(event)">
 </div>
 
 </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<!-- Delete confirmation dialog -->
+<div class="dialog-overlay" id="deleteDialog">
+  <div class="dialog">
+    <h4>Delete Recipe?</h4>
+    <p>Are you sure you want to delete "<span id="deleteRecipeName"></span>"? This cannot be undone.</p>
+    <div class="dialog-actions">
+      <button class="cancel" onclick="closeDeleteDialog()">Cancel</button>
+      <button class="danger" onclick="deleteRecipe()">Delete</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -196,6 +326,7 @@ function calculate() {
   const hydration = num("hydration");
   const starterPct = num("starterPct");
   const saltPct = num("saltPct");
+  const starterHydration = num("starterHydration") || 100;
 
   let flour;
 
@@ -209,16 +340,25 @@ function calculate() {
   }
 
   const starter = flour * starterPct/100;
-  const water = flour * hydration/100 - starter/2;
+  
+  // Calculate water accounting for starter hydration
+  // Starter at X% hydration means: flour_in_starter = starter / (1 + X/100)
+  // water_in_starter = flour_in_starter * (X/100)
+  const flourInStarter = starter / (1 + starterHydration/100);
+  const waterInStarter = flourInStarter * (starterHydration/100);
+  const water = flour * hydration/100 - waterInStarter;
+  
   const salt = flour * saltPct/100;
-
   const total = flour + starter + water + salt;
 
   set("flourOut", flour);
   set("starter", starter);
-  set("water", water);
+  set("water", Math.max(0, water));
   set("salt", salt);
   set("total", total);
+
+  // Auto-save as last loaf
+  saveLastLoaf();
 }
 
 // MODE TOGGLE
@@ -228,37 +368,108 @@ el("mode").addEventListener("change", () => {
   calculate();
 });
 
-// SAVE
+// TOAST NOTIFICATION
+function showToast(message, duration = 2000) {
+  const toast = el("toast");
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, duration);
+}
+
+// NEW RECIPE
+function newRecipe() {
+  el("recipeName").value = "";
+  el("flour").value = "500";
+  el("doughWeight").value = "900";
+  el("hydration").value = "73";
+  el("starterPct").value = "20";
+  el("saltPct").value = "2";
+  el("starterHydration").value = "100";
+  el("notes").value = "";
+  el("bulkTime").value = "";
+  el("bulkTemp").value = "";
+  el("coldTime").value = "";
+  el("coldTemp").value = "";
+  el("mode").value = "flour";
+  el("doughWeightLabel").style.display = "none";
+  el("recipeList").value = "";
+  calculate();
+  showToast("Ready for new recipe");
+}
+
+// SAVE LAST LOAF (auto-save on every calculation)
+function saveLastLoaf() {
+  const data = collect();
+  localStorage.setItem("sourdoughRecipe", JSON.stringify(data));
+}
+
+// SAVE RECIPE
 function saveRecipe() {
   const name = el("recipeName").value.trim();
-  if (!name) return alert("Name required");
+  if (!name) return alert("Please enter a recipe name");
 
   const data = collect();
 
   let recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
   const i = recipes.findIndex(r => r.name === name);
 
-  if (i >= 0) recipes[i].data = data;
-  else recipes.push({name, data});
+  if (i >= 0) {
+    recipes[i].data = data;
+    showToast("Recipe updated");
+  } else {
+    recipes.push({name, data});
+    showToast("Recipe saved");
+  }
 
   localStorage.setItem("sourdoughRecipes", JSON.stringify(recipes));
   updateList();
+  el("recipeList").value = name;
 }
 
 function loadSelectedRecipe() {
   const name = el("recipeList").value;
+  if (!name) return;
+  
   const recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
   const r = recipes.find(x => x.name === name);
   if (!r) return;
+  
   apply(r.data);
+  
+  // Update mode display
+  const m = el("mode").value;
+  el("doughWeightLabel").style.display = m === "dough" ? "block" : "none";
+  
   calculate();
 }
 
 function loadLastLoaf() {
   const r = JSON.parse(localStorage.getItem("sourdoughRecipe"));
-  if (!r) return alert("No last loaf");
+  if (!r) return alert("No last loaf saved yet");
+  
   apply(r);
+  
+  // Update mode display
+  const m = el("mode").value;
+  el("doughWeightLabel").style.display = m === "dough" ? "block" : "none";
+  
   calculate();
+  showToast("Last loaf loaded");
+}
+
+// DELETE WITH CONFIRMATION
+function confirmDelete() {
+  const name = el("recipeList").value;
+  if (!name) return alert("Please select a recipe to delete");
+  
+  el("deleteRecipeName").textContent = name;
+  el("deleteDialog").classList.add("show");
+}
+
+function closeDeleteDialog() {
+  el("deleteDialog").classList.remove("show");
 }
 
 function deleteRecipe() {
@@ -267,6 +478,8 @@ function deleteRecipe() {
   recipes = recipes.filter(r => r.name !== name);
   localStorage.setItem("sourdoughRecipes", JSON.stringify(recipes));
   updateList();
+  closeDeleteDialog();
+  showToast("Recipe deleted");
 }
 
 function updateList() {
@@ -284,6 +497,9 @@ function updateList() {
 // EXPORT
 function exportRecipes() {
   const recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
+  if (recipes.length === 0) {
+    return alert("No recipes to export");
+  }
   const blob = new Blob([JSON.stringify(recipes, null, 2)], {type:"application/json"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -291,14 +507,79 @@ function exportRecipes() {
   a.download = "sourdough-recipes.json";
   a.click();
   URL.revokeObjectURL(url);
+  showToast("Recipes exported");
+}
+
+// IMPORT
+function triggerImport() {
+  el("importInput").click();
+}
+
+function importRecipes(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      
+      if (!Array.isArray(imported)) {
+        throw new Error("Invalid format");
+      }
+      
+      // Validate structure
+      for (const recipe of imported) {
+        if (!recipe.name || !recipe.data) {
+          throw new Error("Invalid recipe format");
+        }
+      }
+      
+      // Merge with existing recipes
+      let existing = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
+      
+      let added = 0;
+      let updated = 0;
+      
+      for (const recipe of imported) {
+        const i = existing.findIndex(r => r.name === recipe.name);
+        if (i >= 0) {
+          existing[i] = recipe;
+          updated++;
+        } else {
+          existing.push(recipe);
+          added++;
+        }
+      }
+      
+      localStorage.setItem("sourdoughRecipes", JSON.stringify(existing));
+      updateList();
+      
+      let message = "";
+      if (added > 0) message += `${added} added`;
+      if (updated > 0) message += (message ? ", " : "") + `${updated} updated`;
+      showToast(`Import complete: ${message}`);
+      
+    } catch (err) {
+      alert("Failed to import: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+  
+  // Reset input so same file can be imported again
+  event.target.value = "";
 }
 
 function collect() {
   return {
+    recipeName: el("recipeName").value,
+    mode: el("mode").value,
     flour: el("flour").value,
+    doughWeight: el("doughWeight").value,
     hydration: el("hydration").value,
     starterPct: el("starterPct").value,
     saltPct: el("saltPct").value,
+    starterHydration: el("starterHydration").value,
     notes: el("notes").value,
     bulkTime: el("bulkTime").value,
     bulkTemp: el("bulkTemp").value,
@@ -314,7 +595,7 @@ function apply(d) {
 function printRecipe(){ window.print(); }
 
 // LIVE UPDATES
-document.querySelectorAll("input").forEach(i=>i.addEventListener("input",calculate));
+document.querySelectorAll("input, select").forEach(i=>i.addEventListener("input",calculate));
 
 updateList();
 calculate();
