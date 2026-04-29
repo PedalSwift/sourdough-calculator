@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sourdough Calculator</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background: #f4f4f4;
+  }
+
+  .section {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 10px;
+  }
+
+  .inputs { background: #fff9c4; }
+  .percentages { background: #bbdefb; }
+  .results { background: #c8e6c9; }
+
+  label { display: block; margin: 8px 0; }
+  input { width: 90px; padding: 5px; margin-left: 10px; }
+
+  button {
+    margin: 5px 5px 0 0;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .result { font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h2>🥖 Lori’s Sourdough Calculator</h2>
+
+<div class="section inputs">
+  <h3>🟡 Inputs</h3>
+
+  <label>
+    Mode:
+    <select id="mode">
+      <option value="flour">Flour Based</option>
+      <option value="dough">Dough Weight</option>
+    </select>
+  </label>
+
+  <label id="flourLabel">Flour (g):
+    <input type="number" id="flour" value="500">
+  </label>
+
+  <label id="doughLabel" style="display:none;">Total Dough (g):
+    <input type="number" id="doughWeight" value="900">
+  </label>
+
+  <button onclick="loadLastLoaf()">Last Loaf</button>
+  <button onclick="saveRecipe()">Save Recipe</button>
+  <button onclick="printRecipe()">Print / Export</button>
+</div>
+
+<div class="section percentages">
+  <h3>🔵 Percentages</h3>
+  <label>Hydration % <input type="number" id="hydration" value="73"></label>
+  <label>Starter % <input type="number" id="starterPct" value="20"></label>
+  <label>Salt % <input type="number" id="saltPct" value="2"></label>
+  <label>Sugar % <input type="number" id="sugarPct" value="0"></label>
+  <label>Oil % <input type="number" id="oilPct" value="0"></label>
+</div>
+
+<div class="section results">
+  <h3>🟢 Results</h3>
+  <p>Flour: <span id="flourOut" class="result"></span> g</p>
+  <p>Starter: <span id="starter" class="result"></span> g</p>
+  <p>Water: <span id="water" class="result"></span> g</p>
+  <p>Salt: <span id="salt" class="result"></span> g</p>
+  <p>Sugar: <span id="sugar" class="result"></span> g</p>
+  <p>Oil: <span id="oil" class="result"></span> g</p>
+  <hr>
+  <p><strong>Total Dough:</strong> <span id="total" class="result"></span> g</p>
+</div>
+
+<script>
+function calculate() {
+  let flour = parseFloat(document.getElementById("flour").value) || 0;
+  const doughWeight = parseFloat(document.getElementById("doughWeight").value) || 0;
+
+  const hydration = parseFloat(document.getElementById("hydration").value) || 0;
+  const starterPct = parseFloat(document.getElementById("starterPct").value) || 0;
+  const saltPct = parseFloat(document.getElementById("saltPct").value) || 0;
+  const sugarPct = parseFloat(document.getElementById("sugarPct").value) || 0;
+  const oilPct = parseFloat(document.getElementById("oilPct").value) || 0;
+
+  if (document.getElementById("mode").value === "dough") {
+    // Estimate flour from total dough weight
+    const factor = 1 + (hydration/100) + (starterPct/100) + (saltPct/100) + (sugarPct/100) + (oilPct/100);
+    flour = doughWeight / factor;
+    document.getElementById("flour").value = flour.toFixed(1);
+  }
+
+  const starter = flour * (starterPct / 100);
+  const starterWater = starter / 2;
+
+  const totalWater = flour * (hydration / 100);
+  const water = totalWater - starterWater;
+
+  const salt = flour * (saltPct / 100);
+  const sugar = flour * (sugarPct / 100);
+  const oil = flour * (oilPct / 100);
+
+  const total = flour + water + starter + salt + sugar + oil;
+
+  document.getElementById("flourOut").textContent = flour.toFixed(1);
+  document.getElementById("starter").textContent = starter.toFixed(1);
+  document.getElementById("water").textContent = water.toFixed(1);
+  document.getElementById("salt").textContent = salt.toFixed(1);
+  document.getElementById("sugar").textContent = sugar.toFixed(1);
+  document.getElementById("oil").textContent = oil.toFixed(1);
+  document.getElementById("total").textContent = total.toFixed(1);
+}
+
+// Mode toggle
+document.getElementById("mode").addEventListener("change", () => {
+  const mode = document.getElementById("mode").value;
+  document.getElementById("flourLabel").style.display = mode === "flour" ? "block" : "none";
+  document.getElementById("doughLabel").style.display = mode === "dough" ? "block" : "none";
+  calculate();
+});
+
+// Save recipe
+function saveRecipe() {
+  const data = {
+    flour: document.getElementById("flour").value,
+    hydration: document.getElementById("hydration").value,
+    starterPct: document.getElementById("starterPct").value,
+    saltPct: document.getElementById("saltPct").value,
+    sugarPct: document.getElementById("sugarPct").value,
+    oilPct: document.getElementById("oilPct").value
+  };
+  localStorage.setItem("sourdoughRecipe", JSON.stringify(data));
+  alert("Recipe saved!");
+}
+
+// Load last loaf
+function loadLastLoaf() {
+  const data = JSON.parse(localStorage.getItem("sourdoughRecipe"));
+  if (!data) return alert("No saved recipe yet!");
+  Object.keys(data).forEach(id => {
+    document.getElementById(id).value = data[id];
+  });
+  calculate();
+}
+
+// Print
+function printRecipe() {
+  window.print();
+}
+
+// Live updates
+document.querySelectorAll("input").forEach(input => {
+  input.addEventListener("input", calculate);
+});
+
+// Init
+calculate();
+</script>
+
+</body>
+</html>
