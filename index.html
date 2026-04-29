@@ -57,6 +57,18 @@
     <input type="number" id="doughWeight" value="900">
   </label>
 
+  <label>
+  Recipe Name:
+  <input type="text" id="recipeName" placeholder="e.g. Daily loaf">
+</label>
+
+<label>
+  Saved Recipes:
+  <select id="recipeList" onchange="loadSelectedRecipe()">
+    <option value="">-- Select --</option>
+  </select>
+</label>
+
   <button onclick="loadLastLoaf()">Last Loaf</button>
   <button onclick="saveRecipe()">Save Recipe</button>
   <button onclick="printRecipe()">Print / Export</button>
@@ -132,6 +144,9 @@ document.getElementById("mode").addEventListener("change", () => {
 
 // Save recipe
 function saveRecipe() {
+  const name = document.getElementById("recipeName").value.trim();
+  if (!name) return alert("Please enter a recipe name!");
+
   const data = {
     flour: document.getElementById("flour").value,
     hydration: document.getElementById("hydration").value,
@@ -140,7 +155,21 @@ function saveRecipe() {
     sugarPct: document.getElementById("sugarPct").value,
     oilPct: document.getElementById("oilPct").value
   };
-  localStorage.setItem("sourdoughRecipe", JSON.stringify(data));
+
+  let recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
+
+  // check if name exists → overwrite
+  const existingIndex = recipes.findIndex(r => r.name === name);
+
+  if (existingIndex >= 0) {
+    recipes[existingIndex].data = data;
+  } else {
+    recipes.push({ name, data });
+  }
+
+  localStorage.setItem("sourdoughRecipes", JSON.stringify(recipes));
+
+  updateRecipeList();
   alert("Recipe saved!");
 }
 
@@ -152,6 +181,41 @@ function loadLastLoaf() {
     document.getElementById(id).value = data[id];
   });
   calculate();
+}
+  
+  // Load selected recipe 
+  document.getElementById("recipeName").value = name;
+  function loadSelectedRecipe() {
+  const name = document.getElementById("recipeList").value;
+  if (!name) return;
+
+  const recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
+  const recipe = recipes.find(r => r.name === name);
+
+  if (!recipe) return;
+
+  const data = recipe.data;
+
+  Object.keys(data).forEach(id => {
+    document.getElementById(id).value = data[id];
+  });
+
+  calculate();
+}
+
+  // Populate dropdown
+  function updateRecipeList() {
+  const select = document.getElementById("recipeList");
+  const recipes = JSON.parse(localStorage.getItem("sourdoughRecipes")) || [];
+
+  select.innerHTML = `<option value="">-- Select --</option>`;
+
+  recipes.forEach(r => {
+    const option = document.createElement("option");
+    option.value = r.name;
+    option.textContent = r.name;
+    select.appendChild(option);
+  });
 }
 
 // Print
@@ -166,6 +230,7 @@ document.querySelectorAll("input").forEach(input => {
 
 // Init
 calculate();
+updateRecipeList();
 </script>
 
 </body>
