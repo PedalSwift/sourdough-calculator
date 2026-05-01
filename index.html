@@ -240,6 +240,14 @@ Total Dough (g)
 <input type="number" id="starterHydration" value="100" min="50" max="200">
 </label>
 
+<label>Sweetener % <span style="font-size: 11px; color: #6b5e52;">(optional)</span>
+<input type="number" id="sweetenerPct" value="0" min="0" placeholder="e.g., 5">
+</label>
+
+<label>Fat/Oil % <span style="font-size: 11px; color: #6b5e52;">(optional)</span>
+<input type="number" id="fatPct" value="0" min="0" placeholder="e.g., 5">
+</label>
+
 </div>
 
 <div class="section">
@@ -284,6 +292,8 @@ Total Dough (g)
 <p>Starter: <span class="value" id="starter"></span> g</p>
 <p>Water: <span class="value" id="water"></span> g</p>
 <p>Salt: <span class="value" id="salt"></span> g</p>
+<p id="sweetenerRow" style="display:none;">Sweetener: <span class="value" id="sweetener"></span> g</p>
+<p id="fatRow" style="display:none;">Fat/Oil: <span class="value" id="fat"></span> g</p>
 <p><strong>Estimated Total Dough:</strong> <span class="value" id="total"></span> g</p>
 </div>
 
@@ -327,12 +337,14 @@ function calculate() {
   const starterPct = num("starterPct");
   const saltPct = num("saltPct");
   const starterHydration = num("starterHydration") || 100;
+  const sweetenerPct = num("sweetenerPct") || 0;
+  const fatPct = num("fatPct") || 0;
 
   let flour;
 
   if (mode().value === "dough") {
     const doughWeight = num("doughWeight");
-    const factor = 1 + hydration/100 + starterPct/100 + saltPct/100;
+    const factor = 1 + hydration/100 + starterPct/100 + saltPct/100 + sweetenerPct/100 + fatPct/100;
     flour = doughWeight / factor;
     el("flour").value = flour.toFixed(1);
   } else {
@@ -349,12 +361,30 @@ function calculate() {
   const water = flour * hydration/100 - waterInStarter;
   
   const salt = flour * saltPct/100;
-  const total = flour + starter + water + salt;
+  const sweetener = flour * sweetenerPct/100;
+  const fat = flour * fatPct/100;
+  const total = flour + starter + water + salt + sweetener + fat;
 
   set("flourOut", flour);
   set("starter", starter);
   set("water", Math.max(0, water));
   set("salt", salt);
+  
+  // Show/hide optional ingredients
+  if (sweetenerPct > 0) {
+    set("sweetener", sweetener);
+    el("sweetenerRow").style.display = "block";
+  } else {
+    el("sweetenerRow").style.display = "none";
+  }
+  
+  if (fatPct > 0) {
+    set("fat", fat);
+    el("fatRow").style.display = "block";
+  } else {
+    el("fatRow").style.display = "none";
+  }
+  
   set("total", total);
 
   // Auto-save as last loaf
@@ -387,6 +417,8 @@ function newRecipe() {
   el("starterPct").value = "20";
   el("saltPct").value = "2";
   el("starterHydration").value = "100";
+  el("sweetenerPct").value = "0";
+  el("fatPct").value = "0";
   el("notes").value = "";
   el("bulkTime").value = "";
   el("bulkTemp").value = "";
@@ -580,6 +612,8 @@ function collect() {
     starterPct: el("starterPct").value,
     saltPct: el("saltPct").value,
     starterHydration: el("starterHydration").value,
+    sweetenerPct: el("sweetenerPct").value,
+    fatPct: el("fatPct").value,
     notes: el("notes").value,
     bulkTime: el("bulkTime").value,
     bulkTemp: el("bulkTemp").value,
